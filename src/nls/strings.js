@@ -1,6 +1,6 @@
 define({
   root: ({
-    _widgetLabel: "WebmapSwitcher",
+    _widgetLabel: "Webmap Switcher",
     swipeText: " Select the layer you want to swipe.",
     spyglassText: "Select the layer to appear within the spyglass.",
     disableTips: "Click to disable the swipe tool",
