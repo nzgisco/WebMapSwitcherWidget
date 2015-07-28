@@ -1,7 +1,7 @@
 define({
   root: ({
-    _widgetLabel: "Webmap switcher"
-   
+      _widgetLabel: "Webmap Switcher",
+      noPermissionMsg:"You do not have permission to view all items in this theme.Some layers will not be added to the map."
   }),
   "ar": 1,
   "cs": 1,
