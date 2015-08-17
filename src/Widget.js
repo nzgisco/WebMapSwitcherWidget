@@ -58,7 +58,11 @@ define([
 
 		    this.own(on(me.themesDijit,
                       "selection-change",
-                      lang.hitch(this, this.selectionChange)));
+                      lang.hitch(this, function () {
+                          this.selectionChange().then(function () {
+                              topic.publish("webmapSwitchEvent");
+                          })
+                      })));
 
 
 		    return this.themesDijit;
