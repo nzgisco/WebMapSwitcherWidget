@@ -55,15 +55,28 @@ define([
 		        basemapsGroup: groupId
 		    }, this.themeGalleryDiv);
 		    this.themesDijit.startup();
-		    
+
+		
 		    this.own(on(this.themesDijit,
                       "selection-change",
                       lang.hitch(this, function () {
                           this.appConfig.map.itemId = this.themesDijit.getSelected().itemId;
                           MapManager.getInstance()._recreateMap(this.appConfig);
                       })));
-
-
+		    aspect.around(this.themesDijit, "onSelectionChange", function (orginalFn) {
+		        return function (c) {
+		            // doing something before the original call
+		            me.appConfig.savedExtent = this.map.extent;
+		            orginalFn.apply(this, arguments);
+		            // doing something after the original call
+		            var mapLoadedCron = window.setInterval(function () {
+		                if (me.widgetManager.loaded.length > 0) {
+		                    me.widgetManager.map.setExtent(me.appConfig.savedExtent);
+		                    window.clearInterval(mapLoadedCron);
+		                }
+		            }, 100);
+		        }
+		    });
 		    return this.themesDijit;
 		},
 		destroythemesDijit: function() {
