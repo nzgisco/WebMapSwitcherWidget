@@ -22,7 +22,7 @@ define([
     'esri/layers/FeatureLayer',
     'esri/layers/ArcGISDynamicMapServiceLayer',
     'jimu/MapManager',
-    'dijit/form/Select',
+    'dijit/form/Select'
     
     
 ], function (declare, array, lang, html, domConstruct, aspect, topic, Deferred, on, query, BaseWidget, PanelManager, LayerInfos, Message,busyUtil,
@@ -31,64 +31,70 @@ define([
 
         baseClass: 'jimu-widget-themesgallery',
         themesDijit: null,
-        operationalLayers: [],
-        editableLayers: [],
-		startup: function() {
-		    this.inherited(arguments);
-		    this.renderThemeSwitcher();
-		},
-		renderThemeSwitcher: function () {
+        _drawnGraphics:false,
+        startup: function() {
+            this.inherited(arguments);
+            this.renderThemeSwitcher();
+        },
+        renderThemeSwitcher: function () {
 
-		    var me = this;
+            var me = this;
 
-		    var portalUrl = this.appConfig.portalUrl;
-		    var map = this.map;
-		    var groupId =  {
-		        "id": me.config.groupID
-		    };
+            var portalUrl = this.appConfig.portalUrl;
+            var map = this.map;
+            var groupId =  {
+                "id": me.config.groupID
+            };
 
-		    this.themesDijit = new BasemapGallery({
-		        showArcGISBasemaps: false,
-		        map: map,
-		        id: "themes-gallery-widget",
-		        portalUrl: portalUrl,
-		        basemapsGroup: groupId
-		    }, this.themeGalleryDiv);
-		    this.themesDijit.startup();
+            this.themesDijit = new BasemapGallery({
+                showArcGISBasemaps: false,
+                map: map,
+                id: "themes-gallery-widget",
+                portalUrl: portalUrl,
+                basemapsGroup: groupId
+            }, this.themeGalleryDiv);
+            this.themesDijit._onNodeClick = lang.hitch(this, function (b) {
+                if (me.appConfig._drawnGraphics) {
+                    var popup = new Message({
+                        message: this.nls.webmapSwitchWarning,
+                        buttons: [{
+                            label: this.nls.cancel,
+                            onClick: function () {
+                                popup.close();
+                            }
+                        }, {
+                            label: this.nls.confirm,
+                            onClick:lang.hitch(this, function () {
+                                popup.close();
+                                this._switchWebMap(b)
+                            })
+                        }]
+                    });
+                    return false;
+                } else {
+                    this._switchWebMap(b)
+                }
 
-		
-		    this.own(on(this.themesDijit,
-                      "selection-change",
-                      lang.hitch(this, function () {
-                          this.appConfig.map.itemId = this.themesDijit.getSelected().itemId;
-                          MapManager.getInstance()._recreateMap(this.appConfig);
-                      })));
-		    aspect.around(this.themesDijit, "onSelectionChange", function (orginalFn) {
-		        return function (c) {
-		            // doing something before the original call
-		            me.appConfig.savedExtent = this.map.extent;
-		            orginalFn.apply(this, arguments);
-		            // doing something after the original call
-		            var mapLoadedCron = window.setInterval(function () {
-		                if (me.widgetManager.loaded.length > 0) {
-		                    me.widgetManager.map.setExtent(me.appConfig.savedExtent);
-		                    window.clearInterval(mapLoadedCron);
-		                }
-		            }, 100);
-		        }
-		    });
-		    return this.themesDijit;
-		},
-		destroythemesDijit: function() {
-		    if (this.themesDijit && this.themesDijit.destroy) {
-		        this.themesDijit.destroy();
-		        this.themesDijit = null;
-			}
-		},
-		destroy: function() {
-			this.destroythemesDijit();
-			this.inherited(arguments);
-		},
+            });
+            this.themesDijit.startup();
+            return this.themesDijit;
+        },
+        _switchWebMap:function(b){
+            this.appConfig.map.itemId = b.itemId;
+            this.appConfig.map.mapOptions.extent = this.map.extent;
+            this.appConfig._drawnGraphics = false;
+            MapManager.getInstance()._recreateMap(this.appConfig);
+        },
+        destroythemesDijit: function() {
+            if (this.themesDijit && this.themesDijit.destroy) {
+                this.themesDijit.destroy();
+                this.themesDijit = null;
+            }
+        },
+        destroy: function() {
+            this.destroythemesDijit();
+            this.inherited(arguments);
+        },
 		_responsive: function () {
 		    // the default width of esriBasemapGalleryNode is 85px,
 		    // margin-left is 10px, margin-right is 10px;
@@ -106,5 +112,6 @@ define([
 		        });
 		    }
 		}
+		
 	});
 });
