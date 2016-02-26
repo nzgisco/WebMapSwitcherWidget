@@ -1,7 +1,7 @@
 define({
   root: ({
       _widgetLabel: "Webmap Switcher",
-      webmapSwitchWarning: "The map contents are about to change and that any drawn graphics that have not been saved will be lost.",
+      webmapSwitchWarning: "You are switching to another map, drawn graphics that have not been saved will be lost.",
       cancel:"Cancel",
       confirm:"OK"
   }),

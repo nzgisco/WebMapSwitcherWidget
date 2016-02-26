@@ -4,29 +4,23 @@ define([
 	'dojo/_base/lang',
 	'dojo/_base/html',
     'dojo/dom-construct',
-    'dojo/aspect',
-    "dojo/topic",
+    'dojo/query',
+    'dojo/dom-attr',
     'dojo/Deferred',
 	'dojo/on',
-    'dojo/query',
 	'jimu/BaseWidget',
     'jimu/PanelManager',
-	'jimu/LayerInfos/LayerInfos',
      'jimu/dijit/Message',
-     'esri/dijit/util/busyIndicator',
 	'dijit/_WidgetsInTemplateMixin',
-    'dijit/layout/ContentPane',
-    'esri/request',
 	'esri/dijit/BasemapGallery',
-    'esri/arcgis/utils',
-    'esri/layers/FeatureLayer',
-    'esri/layers/ArcGISDynamicMapServiceLayer',
     'jimu/MapManager',
-    'dijit/form/Select'
+    'dojo/cookie',
+    'esri/request',
+    'esri/IdentityManager'
+
     
-    
-], function (declare, array, lang, html, domConstruct, aspect, topic, Deferred, on, query, BaseWidget, PanelManager, LayerInfos, Message,busyUtil,
-	_WidgetsInTemplateMixin, ContentPane, esriRequest, BasemapGallery, esriUtils, FeatureLayer, ArcGISDynamicMapServiceLayer, MapManager) {
+], function (declare, array, lang, html, domConstruct, domQuery, domAttr,  Deferred, on, BaseWidget, PanelManager, Message,
+	_WidgetsInTemplateMixin, BasemapGallery, MapManager, cookie, esriRequest, esriId) {
     return declare([BaseWidget, _WidgetsInTemplateMixin], {
 
         baseClass: 'jimu-widget-themesgallery',
@@ -35,24 +29,27 @@ define([
         startup: function() {
             this.inherited(arguments);
             this.renderThemeSwitcher();
+            this._setVersionTitle();
         },
         renderThemeSwitcher: function () {
-
+            //var cookieString = cookie("esri_auth") || cookie("wab_auth");
+            //var token;
+            //if (cookieString && JSON.parse(cookieString).token) {
+            //    token = JSON.parse(cookieString).token;
+            //}
             var me = this;
-
             var portalUrl = this.appConfig.portalUrl;
             var map = this.map;
             var groupId =  {
-                "id": me.config.groupID
+                "id": this.config.groupID
             };
-
             this.themesDijit = new BasemapGallery({
                 showArcGISBasemaps: false,
                 map: map,
-                id: "themes-gallery-widget",
                 portalUrl: portalUrl,
                 basemapsGroup: groupId
             }, this.themeGalleryDiv);
+            this.themesDijit.startup();
             this.themesDijit._onNodeClick = lang.hitch(this, function (b) {
                 if (me.appConfig._drawnGraphics) {
                     var popup = new Message({
@@ -76,8 +73,6 @@ define([
                 }
 
             });
-            this.themesDijit.startup();
-            return this.themesDijit;
         },
         _switchWebMap:function(b){
             this.appConfig.map.itemId = b.itemId;
@@ -111,7 +106,40 @@ define([
 		            html.setStyle(node, 'width', 85 + addWidth + 'px');
 		        });
 		    }
+		},
+
+		_setVersionTitle: function () {
+		    var labelNode = this._getLabelNode(this);
+		    var manifestInfo = this.manifest;
+		    var devVersion = manifestInfo.version;
+		    var devWabVersion = manifestInfo.developedAgainst || manifestInfo.wabVersion;
+		    var codeSourcedFrom = manifestInfo.codeSourcedFrom;
+		    var client = manifestInfo.client;
+
+		    var title = "Dev version: " + devVersion + "\n";
+		    title += "Developed/Modified against: WAB" + devWabVersion + "\n";
+		    title += "Client: " + client + "\n";
+		    if (codeSourcedFrom) {
+		        title += "Code sourced from: " + codeSourcedFrom + "\n";
+		    }
+
+		    if (labelNode) {
+		        domAttr.set(labelNode, 'title', title);
+		    }
+
+		},
+		_getLabelNode: function (widget) {
+		    var labelNode;
+		    if (!(widget.labelNode) && !(widget.titleLabelNode)) {
+		        if (widget.getParent()) {
+		            labelNode = this._getLabelNode(widget.getParent());
+		        }
+		    } else {
+		        labelNode = widget.labelNode || widget.titleLabelNode;
+		    }
+		    return labelNode;
+
 		}
-		
+
 	});
 });
